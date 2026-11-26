@@ -1,0 +1,208 @@
+// Prisma schema for HANS Solar (MongoDB)
+// Public catalog + contact enquiries (no customer auth/checkout)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  CONVERTED
+  CLOSED
+}
+
+model Category {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  slug        String   @unique
+  description String
+  image       String
+  imagePublicId String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+
+  @@index([isActive])
+}
+
+model Product {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String
+  price           Float
+  discountPercent Float    @default(0)
+  images          String[]
+  imagePublicIds  String[]
+  videoUrl        String?
+  videoPublicId   String?
+  categoryId      String   @db.ObjectId
+  stock           Int      @default(0)
+  specifications  Json?
+  warranty        String
+  isActive        Boolean  @default(true)
+  isTrending      Boolean  @default(false)
+  isGovernmentSubsidy Boolean @default(false)
+  isSubsidy       Boolean  @default(false)
+  subsidyDiscount Float?   @default(0)
+  isOnSale        Boolean  @default(false)
+  saleDiscountPercent Float?
+  gstEnabled      Boolean  @default(false)
+  gstPercentage   Float    @default(0)
+  festivalId              String?  @db.ObjectId
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id])
+  festival Festival? @relation(fields: [festivalId], references: [id], onDelete: SetNull)
+  productViews ProductView[]
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isActive, categoryId])
+  @@index([isActive, isTrending])
+  @@index([isActive, festivalId])
+  @@index([isTrending])
+  @@index([isGovernmentSubsidy])
+  @@index([isSubsidy])
+  @@index([festivalId])
+}
+
+model Festival {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  name                String
+  title               String
+  description         String
+  imageUrl            String
+  imagePublicId       String?
+  startsAt            DateTime
+  endsAt              DateTime
+  applyToAllProducts  Boolean  @default(false)
+  discountPercent     Float?
+  isEnabled           Boolean  @default(true)
+  priority            Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  products Product[]
+
+  @@index([isEnabled])
+  @@index([isEnabled, startsAt, endsAt])
+  @@index([priority])
+  @@index([startsAt])
+  @@index([endsAt])
+}
+
+model ContactEnquiry {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  phone     String
+  subject   String
+  message   String
+  status    EnquiryStatus @default(NEW)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Admin {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  name                String
+  email               String   @unique
+  password            String
+  totpSecretEncrypted String?
+  totpEnabled         Boolean  @default(false)
+  backupCodesHashed   String[] @default([])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model HomepageBanner {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  position      Int      @unique
+  title         String
+  imageUrl            String
+  imagePublicId       String?
+  mobileImageUrl      String?
+  mobileImagePublicId String?
+  isActive            Boolean  @default(true)
+  linkType      String   @default("none")
+  linkTargetId  String?  @db.ObjectId
+  linkUrl       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model SiteMedia {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  key           String   @unique
+  imageUrl      String
+  imagePublicId String?
+  alt           String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Visitor {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  visitorKey          String    @unique
+  adminId             String?   @db.ObjectId
+  name                String?
+  ip                  String?
+  country             String?
+  countryCode         String?
+  region              String?
+  city                String?
+  locationLookedUpAt  DateTime?
+  firstSeenAt         DateTime  @default(now())
+  lastSeenAt          DateTime  @updatedAt
+
+  dailyVisits  VisitorDailyVisit[]
+  productViews ProductView[]
+
+  @@index([lastSeenAt])
+  @@index([adminId])
+  @@index([ip])
+  @@index([country])
+  @@index([countryCode])
+  @@index([countryCode, region])
+  @@index([countryCode, region, city])
+}
+
+model VisitorDailyVisit {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  visitorId String   @db.ObjectId
+  visitDate String
+  createdAt DateTime @default(now())
+
+  visitor Visitor @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  @@unique([visitorId, visitDate])
+  @@index([visitDate])
+}
+
+model ProductView {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  visitorId String   @db.ObjectId
+  productId String   @db.ObjectId
+  createdAt DateTime @default(now())
+
+  visitor Visitor @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([visitorId, productId])
+  @@index([productId])
+}

@@ -1,0 +1,201 @@
+import catchAsync from '../utils/catchAsync.js';
+import ApiError from '../utils/ApiError.js';
+import { setPublicJsonCache } from '../utils/publicCache.js';
+import { normalizeStoredMediaUrl } from '../utils/mediaUrl.js';
+import {
+  createProduct,
+  deleteProduct,
+  getAdminProductById,
+  getAdminProducts,
+  getFeaturedProducts,
+  getPublicProductById,
+  getPublicProducts,
+  searchPublicProducts,
+  updateProduct,
+} from '../services/productService.js';
+
+const parseExistingImages = (value) => {
+  if (!value) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    throw new ApiError(400, 'Existing images must be a valid JSON array');
+  }
+};
+
+const mapProductBody = (body, files) => {
+  const imageFiles = files?.images || [];
+  const videoFile = files?.video?.[0] || null;
+
+  return {
+    name: body.name,
+    description: body.description,
+    price: body.price,
+    categoryId: body.categoryId,
+    stock: body.stock ?? 0,
+    specifications: body.specifications,
+    warranty: body.warranty,
+    isActive:
+      body.isActive === undefined
+        ? undefined
+        : body.isActive === true || body.isActive === 'true',
+    isTrending:
+      body.isTrending === undefined
+        ? undefined
+        : body.isTrending === true || body.isTrending === 'true',
+    isGovernmentSubsidy:
+      body.isSubsidy !== undefined
+        ? body.isSubsidy === true || body.isSubsidy === 'true'
+        : body.isGovernmentSubsidy !== undefined
+          ? body.isGovernmentSubsidy === true ||
+            body.isGovernmentSubsidy === 'true'
+          : undefined,
+    isSubsidy:
+      body.isSubsidy !== undefined
+        ? body.isSubsidy === true || body.isSubsidy === 'true'
+        : body.isGovernmentSubsidy !== undefined
+          ? body.isGovernmentSubsidy === true ||
+            body.isGovernmentSubsidy === 'true'
+          : undefined,
+    subsidyDiscount:
+      body.subsidyDiscount === undefined || body.subsidyDiscount === ''
+        ? undefined
+        : Number(body.subsidyDiscount),
+    isOnSale:
+      body.isOnSale === undefined
+        ? undefined
+        : body.isOnSale === true || body.isOnSale === 'true',
+    saleDiscountPercent:
+      body.saleDiscountPercent === undefined ||
+        body.saleDiscountPercent === ''
+        ? undefined
+        : body.saleDiscountPercent,
+    gstEnabled:
+      body.gstEnabled === undefined
+        ? undefined
+        : body.gstEnabled === true || body.gstEnabled === 'true',
+    gstPercentage:
+      body.gstPercentage === undefined || body.gstPercentage === ''
+        ? undefined
+        : body.gstPercentage,
+    existingImages: parseExistingImages(body.existingImages).map(
+      normalizeStoredMediaUrl,
+    ),
+    imageFiles,
+    videoFile,
+    removeVideo: body.removeVideo === true || body.removeVideo === 'true',
+    videoLink: body.videoLink,
+  };
+};
+
+export const getPublicProductsHandler = catchAsync(async (req, res) => {
+  const isSubsidy =
+    req.query.subsidy === 'true' ||
+    req.query.isSubsidy === 'true' ||
+    req.query.isGovernmentSubsidy === 'true';
+
+  const products = await getPublicProducts({
+    categorySlug: req.query.category,
+    isSubsidy: isSubsidy ? true : undefined,
+    search: req.query.search || req.query.q,
+    limit: req.query.limit,
+    page: req.query.page,
+  });
+
+  setPublicJsonCache(res, 30);
+  res.status(200).json({
+    success: true,
+    data: { products },
+  });
+});
+
+export const searchPublicProductsHandler = catchAsync(async (req, res) => {
+  const products = await searchPublicProducts({
+    q: req.query.q || req.query.search || '',
+    limit: req.query.limit,
+  });
+
+  setPublicJsonCache(res, 60);
+  res.status(200).json({
+    success: true,
+    data: { products },
+  });
+});
+
+export const getFeaturedProductsHandler = catchAsync(async (_req, res) => {
+  const data = await getFeaturedProducts();
+
+  setPublicJsonCache(res, 120);
+  res.status(200).json({
+    success: true,
+    data,
+  });
+});
+
+export const getPublicProductByIdHandler = catchAsync(async (req, res) => {
+  const data = await getPublicProductById(req.params.id);
+
+  setPublicJsonCache(res, 30);
+  res.status(200).json({
+    success: true,
+    data,
+  });
+});
+
+export const getAdminProductsHandler = catchAsync(async (_req, res) => {
+  const products = await getAdminProducts();
+
+  res.status(200).json({
+    success: true,
+    data: { products },
+  });
+});
+
+export const getAdminProductByIdHandler = catchAsync(async (req, res) => {
+  const product = await getAdminProductById(req.params.id);
+
+  res.status(200).json({
+    success: true,
+    data: { product },
+  });
+});
+
+export const createAdminProduct = catchAsync(async (req, res) => {
+  const product = await createProduct(mapProductBody(req.body, req.files));
+
+  res.status(201).json({
+    success: true,
+    message: 'Product created successfully',
+    data: { product },
+  });
+});
+
+export const updateAdminProduct = catchAsync(async (req, res) => {
+  const product = await updateProduct(
+    req.params.id,
+    mapProductBody(req.body, req.files),
+  );
+
+  res.status(200).json({
+    success: true,
+    message: 'Product updated successfully',
+    data: { product },
+  });
+});
+
+export const deleteAdminProduct = catchAsync(async (req, res) => {
+  const result = await deleteProduct(req.params.id);
+
+  res.status(200).json({
+    success: true,
+    message: result.message,
+  });
+});

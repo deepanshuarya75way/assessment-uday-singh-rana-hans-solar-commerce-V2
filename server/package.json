@@ -1,0 +1,41 @@
+{
+  "name": "hans-solar-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "stop": "node scripts/stop-server.js",
+    "restart": "node scripts/stop-server.js && node src/server.js",
+    "upload:static-assets": "node scripts/upload-static-assets.js",
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "admin:reset-totp": "node scripts/resetAdminTotp.js",
+    "admin:diagnose-totp": "node scripts/diagnoseAdminTotp.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.2",
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.11.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
+    "multer": "^2.2.0",
+    "otplib": "^13.5.0",
+    "qrcode": "^1.5.4",
+    "sanitize-html": "^2.17.7",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "prisma": "^6.19.2"
+  }
+}
