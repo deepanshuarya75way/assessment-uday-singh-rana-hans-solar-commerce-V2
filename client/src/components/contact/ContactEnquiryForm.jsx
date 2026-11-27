@@ -43,6 +43,7 @@ export default function ContactEnquiryForm({
   title = 'Send Us Your Requirement',
   description = 'Fill in your details and our team will reach out shortly.',
   titleId,
+  initialMessage = '',
 }) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitContactEnquiry] = useSubmitContactEnquiryMutation();
@@ -59,7 +60,7 @@ export default function ContactEnquiryForm({
       name: '',
       phone: '',
       email: '',
-      message: '',
+      message: initialMessage,
     },
   });
 

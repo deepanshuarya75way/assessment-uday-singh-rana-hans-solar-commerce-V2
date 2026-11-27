@@ -1,8 +1,10 @@
+import { useLocations } from 'react-router-dom';
 import { Mail, MapPin } from 'lucide-react';
 import ContactEnquiryForm from '@/components/contact/ContactEnquiryForm';
 import { contactInfo, corporateOffice } from '@/constants/homeContent';
 
 export default function ContactPage() {
+  const location = useLocation();
   return (
     <div className="bg-gray-50">
       <section className="border-b border-gray-200 bg-gradient-to-br from-solar-700 via-solar-600 to-emerald-700">
@@ -86,7 +88,7 @@ export default function ContactPage() {
             </div>
           </aside>
 
-          <ContactEnquiryForm idPrefix="contact" enquiryType="contact" />
+          <ContactEnquiryForm idPrefix="contact" enquiryType="contact" initialMessage={location.state?.prefillMessage || ''} />
         </div>
       </div>
     </div>

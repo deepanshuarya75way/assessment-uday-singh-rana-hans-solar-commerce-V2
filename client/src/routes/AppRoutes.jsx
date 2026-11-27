@@ -12,6 +12,7 @@ const ShopPage = lazy(() => import('@/pages/ShopPage'));
 const ProductDetailPage = lazy(() => import('@/pages/ProductDetailPage'));
 const ContactPage = lazy(() => import('@/pages/ContactPage'));
 const QuotePage = lazy(() => import('@/pages/QuotePage'));
+const SolarCalculatorPage = lazy(() => import('@/pages/SolarCalculatorPage'));
 const PlaceholderPage = lazy(() => import('@/pages/PlaceholderPage'));
 const DistributorPage = lazy(() => import('@/pages/DistributorPage'));
 const LearnPage = lazy(() => import('@/pages/LearnPage'));
@@ -55,6 +56,7 @@ export default function AppRoutes() {
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/quote" element={<QuotePage />} />
+          <Route path="/solar" element={<SolarCalculatorPage />} />
           <Route path="/distributor" element={<DistributorPage />} />
           <Route path="/learn/:topic" element={<LearnPage />} />
           <Route path="/subsidy/:topic" element={<SubsidyPage />} />
